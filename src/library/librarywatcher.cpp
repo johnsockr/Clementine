@@ -527,7 +527,16 @@ void LibraryWatcher::PreserveUserSetData(const QString& file,
   // know if it has embedded artwork or not, but we can check here.
   if (!out->has_embedded_cover()) out->set_art_automatic(image);
 
+  float const out_rating = out->rating();
+  float const matched_rating = matching_song.rating();
+  bool const import_rating = out_rating != matched_rating;
+
   out->MergeUserSetData(matching_song);
+
+  if (import_rating) {
+    qLog(Debug) << file << "rating imported: " << matched_rating << "-->" << out_rating;
+    out->set_rating(out_rating);
+  }
 
   // The song was deleted from the database (e.g. due to an unmounted
   // filesystem), but has been restored.
@@ -535,7 +544,7 @@ void LibraryWatcher::PreserveUserSetData(const QString& file,
     qLog(Debug) << file << " unavailable song restored";
 
     t->new_songs << *out;
-  } else if (!matching_song.IsMetadataEqual(*out)) {
+  } else if (!matching_song.IsMetadataEqual(*out) || import_rating) {
     qLog(Debug) << file << "metadata changed";
 
     // Update the song in the DB
