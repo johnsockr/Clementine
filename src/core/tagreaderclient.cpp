@@ -82,7 +82,8 @@ TagReaderReply* TagReaderClient::UpdateSongStatistics(const Song& metadata) {
 void TagReaderClient::UpdateSongsStatistics(const SongList& songs) {
   for (const Song& song : songs) {
     TagReaderReply* reply = UpdateSongStatistics(song);
-    connect(reply, SIGNAL(Finished(bool)), reply, SLOT(deleteLater()));
+    connect(reply, SIGNAL(Finished(bool)), this, SLOT(DeleteAsyncReply()),
+            Qt::QueuedConnection);
   }
 }
 
@@ -100,7 +101,20 @@ TagReaderReply* TagReaderClient::UpdateSongRating(const Song& metadata) {
 void TagReaderClient::UpdateSongsRating(const SongList& songs) {
   for (const Song& song : songs) {
     TagReaderReply* reply = UpdateSongRating(song);
-    connect(reply, SIGNAL(Finished(bool)), reply, SLOT(deleteLater()));
+    connect(reply, SIGNAL(Finished(bool)), this, SLOT(DeleteAsyncReply()),
+            Qt::QueuedConnection);
+  }
+}
+
+void TagReaderClient::DeleteAsyncReply() {
+  TagReaderReply *reply = dynamic_cast<TagReaderReply*>(QObject::sender());
+  if (reply) {
+    qLog(Debug) << " - waiting for " << reply->id();
+    reply->WaitForFinished();
+    qLog(Debug) << " - done waiting for " << reply->id();
+    reply->deleteLater();
+  } else {
+    qLog(Warning) << "sender(TagReaderReply*) is null";
   }
 }
 

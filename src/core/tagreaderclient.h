@@ -73,6 +73,7 @@ class TagReaderClient : public QObject {
 
  private slots:
   void WorkerFailedToStart();
+  void DeleteAsyncReply();
 
  private:
   static TagReaderClient* sInstance;
